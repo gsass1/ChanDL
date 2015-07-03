@@ -56,7 +56,7 @@ def download_images(post):
             return
 
     if chan == "8chan":
-        url = "https://media.8ch.net/%s/src/%s" % (board, str(post["tim"]) + extension)
+        url = "https://8ch.net/%s/src/%s" % (board, str(post["tim"]) + extension)
     else:
         url = "https://i.4cdn.org/%s/%s" % (board, str(post["tim"]) + extension)
     path = os.path.join(dest, filename + extension)
