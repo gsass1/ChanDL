@@ -10,6 +10,7 @@ import urlparse
 board = None
 chan = None
 dest = None
+ext = None
 thread = None
 
 def parse_url(url):
@@ -45,30 +46,36 @@ def parse_url(url):
     return board, threadurl
 
 def download_images(post):
-    global board, chan, dest, thread
+    global board, chan, dest, ext, thread
 
     filename = post["filename"]
-    ext = post["ext"]
+    extension = post["ext"]
+
+    if not "*" in ext:
+        if not any(e in extension for e in ext):
+            return
 
     if chan == "8chan":
-        url = "https://media.8ch.net/%s/src/%s" % (board, str(post["tim"]) + ext)
+        url = "https://media.8ch.net/%s/src/%s" % (board, str(post["tim"]) + extension)
     else:
-        url = "https://i.4cdn.org/%s/%s" % (board, str(post["tim"]) + ext)
-    path = os.path.join(dest, filename + ext)
+        url = "https://i.4cdn.org/%s/%s" % (board, str(post["tim"]) + extension)
+    path = os.path.join(dest, filename + extension)
     if not os.path.isfile(path):
         print "Downloading: " + url
         with open(path, "wb") as file:
             file.write(requests.get(url).content)
 
 def main():
-    global board, dest, thread
+    global board, dest, ext, thread
 
     parser = argparse.ArgumentParser()
     parser.add_argument('url', help="The URL of the thread you want to download")
     parser.add_argument('-d', "--destination", default=".", help="Where the files are to be stored.")
+    parser.add_argument('-ext', "--extension", default="*", help="What file extensions to download, format: ext1,ext2;...")
     args = parser.parse_args()
 
     dest = args.destination
+    ext = str(args.extension).lower().split(',')
 
     board, thread = parse_url(args.url)
 
