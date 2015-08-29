@@ -2,6 +2,7 @@
 
 import argparse
 import copy
+import errno
 import json
 import os
 import re
@@ -14,16 +15,17 @@ board = None
 chan = None
 dest = None
 ext = None
+hashlist = None
 thread = None
 
 # Split a sequence into num chunks
 def chunks(seq, num):
-  avg = len(seq) / float(num)
-  last = 0.0
+    avg = len(seq) / float(num)
+    last = 0.0
 
-  while last < len(seq):
-    yield seq[int(last):int(last + avg)]
-    last += avg
+    while last < len(seq):
+        yield seq[int(last):int(last + avg)]
+        last += avg
 
 def parse_url(url):
     global chan
@@ -59,7 +61,9 @@ def parse_url(url):
 
 def download_images_thread(images):
     for i in images:
-        download_image(i)
+        if not i["md5"] in hashlist:
+            download_image(i)
+            hashlist.append(i["md5"])
 
 def download_image(post):
     global board, chan, dest, ext, thread
@@ -82,7 +86,7 @@ def download_image(post):
             file.write(requests.get(url).content)
 
 def main():
-    global board, dest, ext, thread
+    global board, dest, ext, hashlist, thread
 
     parser = argparse.ArgumentParser()
     parser.add_argument('url', help="The URL of the thread you want to download")
@@ -100,12 +104,26 @@ def main():
     if thread.endswith(".html"): 
         thread = thread.replace(".html", ".json")
     elif not thread.endswith(".json"):
-        print "URL is invaid, please check!" 
+        print "URL is invalid, please check!"
         exit(-1)
 
     print "Downloading thread data"
     r = requests.get(thread)
     print "done"
+
+    datapath = os.path.join(dest, ".chandl")
+    try:
+        os.mkdir(datapath)
+    except os.error, e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    if not os.path.exists(os.path.join(datapath, "hashlist")):
+        open(os.path.join(datapath, "hashlist"), 'w').close()
+
+    # Read hashlist
+    with open(os.path.join(datapath, "hashlist"), "r") as f:
+        hashlist = f.readlines()
 
     # Collect all images into this array
     images = []
@@ -115,13 +133,11 @@ def main():
             images.append(copy.deepcopy(post))
         if "extra_files" in post:
             for f in post["extra_files"]:
-                images.append(copy.deepcpoy(f)) 
+                images.append(copy.deepcopy(f)) 
 
     threads = []
-
-    print threadcount
     for c in chunks(images, threadcount):
-        t = threading.Thread(target = download_images_thread, args = (c,))
+        t = threading.Thread(target=download_images_thread, args=(c,))
         threads.append(t)
         t.daemon = True
         t.start()
@@ -131,6 +147,11 @@ def main():
 
     for t in threads:
         t.join()
+
+    # Serialize hash list
+    with open(os.path.join(datapath, "hashlist"), "w") as f:
+        for hash in hashlist:
+            f.write("%s\n" % str(hash))
 
 if __name__ == "__main__":
     main()
