@@ -216,7 +216,7 @@ def main():
     if not watch:
         exit(0)
 
-    print "Entering watch mode (update interval = %u)" % update_interval
+    print "Entering watch mode (update interval = %us)" % update_interval
 
     while True:
         images = []
