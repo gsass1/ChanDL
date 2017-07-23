@@ -49,7 +49,7 @@ http://8ch.net/wsg/res/45.html
 Example: Download all .webm files of some thread
 
 ~/Pictures/Anime - is the folder where the files will be stored
->chandl.py -u http://boards.4chan.org/wsg/thread/738403/anime-thread-1730 -d ~/Pictures/Anime -ext webm
+>chandl.py -url http://boards.4chan.org/wsg/thread/738403/anime-thread-1730 -d ~/Pictures/Anime -ext webm
 
 You can also download all extensions by leaving the -ext parameter out.
 
