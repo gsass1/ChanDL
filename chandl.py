@@ -86,6 +86,9 @@ def download_images_thread(images):
 def download_image(post):
     global board, chan, dest, ext, orig_filenames, thread
 
+    if post["md5"] in hashlist:
+        return
+
     filename = post["filename"] if orig_filenames else str(post["tim"])
     extension = post["ext"]
 
@@ -98,10 +101,16 @@ def download_image(post):
     else:
         url = "https://i.4cdn.org/%s/%s" % (board, str(post["tim"]) + extension)
     path = os.path.join(dest, filename + extension)
-    if not os.path.isfile(path) and not post["md5"] in hashlist:
-        print "Downloading: " + url
-        with open(path, "wb") as file:
-            file.write(requests.get(url).content)
+
+    i = 1
+    # Prevent duplicate filenames
+    while os.path.isfile(path):
+        path = os.path.join(dest, filename + "_" + str(i) + extension)
+        i+=1
+
+    print "%s -> '%s'" % (url, path)
+    with open(path, "wb") as file:
+        file.write(requests.get(url).content)
 
 def write_hashlist():
     global datapath, hashlist
