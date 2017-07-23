@@ -229,10 +229,13 @@ def main():
     while True:
         images = []
 
-        time.sleep(float(update_interval))
         r = download_thread_data(thread)
+        posts = r.json()["posts"]
+        if posts[0].has_key("closed") and posts[0]["closed"] == 1:
+            print "Thread is closed. Exiting."
+            exit(0)
 
-        for post in r.json()["posts"]:
+        for post in posts:
             if "filename" in post:
                 if post["md5"] not in hashlist:
                     images.append(copy.deepcopy(post))
@@ -243,6 +246,7 @@ def main():
 
         download_images_thread(images)
         write_hashlist()
+        time.sleep(float(update_interval))
 
 if __name__ == "__main__":
     main()
