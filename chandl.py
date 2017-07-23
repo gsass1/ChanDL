@@ -124,6 +124,14 @@ def gen_hashlist(d):
         hashlist.append(gen_md5(os.path.join(d, f)))
     write_hashlist()
 
+def download_thread_data(url):
+    r = requests.get(thread)
+    if r.status_code == 404:
+        print "API returned 404."
+        exit(0)
+    else:
+        return r
+
 def main():
     global board, datapath, dest, ext, hashlist, orig_filenames, thread
 
@@ -172,7 +180,7 @@ def main():
         print "Invalid URL"
         exit(1)
 
-    r = requests.get(thread)
+    r = download_thread_data(thread)
 
     datapath = os.path.join(dest, ".chandl")
     try:
@@ -222,7 +230,7 @@ def main():
         images = []
 
         time.sleep(float(update_interval))
-        r = requests.get(thread)
+        r = download_thread_data(thread)
 
         for post in r.json()["posts"]:
             if "filename" in post:
