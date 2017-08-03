@@ -141,6 +141,20 @@ def download_thread_data(url):
     else:
         return r
 
+def mkdir_p(path):
+    try:
+        os.mkdir(path)
+    except os.error, e:
+        if e.errno != errno.EEXIST:
+            raise
+
+def init_datapath(top_dir):
+    global datapath
+
+    datapath = os.path.join(top_dir, ".chandl")
+    mkdir_p(top_dir)
+    mkdir_p(datapath)
+
 def main():
     global board, datapath, dest, ext, hashlist, orig_filenames, thread
 
@@ -164,12 +178,7 @@ def main():
     url = args.url
 
     if args.gen_hashlist is not None:
-        datapath = os.path.join(args.gen_hashlist, ".chandl")
-        try:
-            os.mkdir(datapath)
-        except os.error, e:
-            if e.errno != errno.EEXIST:
-                raise
+        init_datapath(args.gen_hashlist)
         gen_hashlist(args.gen_hashlist)
         exit(0)
 
@@ -191,12 +200,7 @@ def main():
 
     r = download_thread_data(thread)
 
-    datapath = os.path.join(dest, ".chandl")
-    try:
-        os.mkdir(datapath)
-    except os.error, e:
-        if e.errno != errno.EEXIST:
-            raise
+    init_datapath(dest)
 
     if not os.path.exists(os.path.join(datapath, "hashlist")):
         open(os.path.join(datapath, "hashlist"), 'w').close()
